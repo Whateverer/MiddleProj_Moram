@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE sqlMap
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+	
+
+<sqlMap namespace="facilities">
+<!-- 	<resultMap  id="rezPlaceMap" class="CalendarVO"> -->
+<!-- 		<result property="start" column="PLACETIME_STIME"/> -->
+<!-- 		<result property="end" column="PLACETIME_ETIME"/> -->
+<!-- 		<result property="title" column="MEM_ID"/> -->
+<!-- 	</resultMap> -->
+<!-- <resultMap class="" id=""> -->
+
+
+
+
+<!-- </resultMap> -->
+<!-- <select id = "rezPlace" resultMap = "rezPlaceMap" parameterClass = "String"> -->
+<!-- 	select  -->
+<!-- 	to_char(PLACETIME_STIME, 'YYYY-MM-DD"T"HH24:MI:SS') as startd, -->
+<!-- 	 to_char(PLACETIME_ETIME, 'YYYY-MM-DD"T"HH24:MI:SS') as endd, -->
+<!-- 	     , 'a001' as MEM_ID -->
+<!-- 	from   placetime  -->
+<!-- 	where place_no = #place_no# -->
+<!-- </select>  -->
+
+<!-- 시설전체 출력 --> 
+
+<!-- 시설이름, 시설 주소 -->
+<select id="allFacilitiesList" resultClass= "FacilitiesVO">
+<!-- 	SELECT A.FACILITIES_NO -->
+<!-- 	     , A.FACILITIES_NAME -->
+<!-- 	     , A.FACILITIES_RGN -->
+<!-- 	     , A.FACILITIES_INFO -->
+<!-- 	     , A.FACILITIES_ADDR -->
+<!-- 	     , A.FACILITIES_JDATE -->
+<!-- 	     , A.FACILITIES_JSTATE -->
+<!-- 	     , A.SUBJECT_NO -->
+<!-- 	     , B.PLACE_NO -->
+<!--          , C.PLACETIME_STATE -->
+<!-- 	FROM   FACILITIES A, PLACE B, PLACETIME C -->
+<!-- 	WHERE  A.FACILITIES_NO = B.FACILITIES_NO -->
+<!--       select -->
+<!--       		 a.facilities_no, -->
+<!--       		 a.facilities_name, -->
+<!--       		 a.facilities_rgn, -->
+<!--       		 a.facilities_info, -->
+<!--       		 a.facilities_addr, -->
+<!--       		 a.facilities_jdate, -->
+<!--       		 a.facilities_jstate, 	 -->
+<!--       		 b.place_no -->
+<!--  		from facilities a, place b -->
+<!--  		where a.place_no = b.place_no -->
+ 		
+ 		select
+      		 facilities_no,
+      		 facilities_name,
+      		 facilities_rgn,
+      		 facilities_info,
+      		 facilities_addr,
+      		 facilities_jdate,
+      		 facilities_jstate 	
+ 		from facilities 
+ 		
+ 		
+ 		
+</select>
+
+<!--  카테고리별 시설리스트  출력 -->
+
+<!-- 시설이름, 시설주소 -->
+<select id = "catFacilitiesList" resultClass = "FacilitiesVO" parameterClass = "String">
+	select b.subject_name, a.facilities_no, a.facilities_name, a.facilities_rgn, a.facilities_info, a.facilities_addr, a.facilities_jdate, a.facilities_jstate 	
+ from facilities a, (select subject_name, subject_no from subject_cat where subject_name= #subject_name#) b
+ where a.subject_no = b.subject_no
+</select>
+
+<!--  선택한 시설 출력 -->
+
+<!-- 시설이름, 시설주소, 시설정보 -->
+<select id = "facilityInfo" resultClass = "FacilitiesVO" parameterClass = "String">
+	select a.facilities_name, a.facilities_addr, a.facilities_info, b.place_no, b.place_name, b.place_price, b.place_info from facilities a,
+        place b     where a.facilities_no = #facilities_no# and b.facilities_no = #facilities_no#    
+</select>
+<!-- 시설 리뷰 출력 -->
+<select id = "facilityReview" resultClass = "facilitiesReviewVO" parameterClass ="String">
+	select * from facilities_review where facilities_no = #facilities_no#
+</select>
+
+<insert id="PlacePay" parameterClass="PlacePayVO">
+	insert into place_pay values('PTRZ'||PTRZ_SEQ.nextval, #placetime_no#, #mem_id#, sysdate, #placepay_price#, '결제완료')
+</insert>
+
+</sqlMap>

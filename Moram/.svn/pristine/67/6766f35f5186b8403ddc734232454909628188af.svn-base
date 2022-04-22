@@ -1,0 +1,6 @@
+/**
+ * 
+ */
+function allFacilitiesList(){
+	$.ajax
+}

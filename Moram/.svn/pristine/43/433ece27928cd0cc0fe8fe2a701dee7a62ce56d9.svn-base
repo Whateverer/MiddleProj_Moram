@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+	
+<sqlMap namespace="management">
+
+	<update id="moramUpdate" parameterClass="moramVO" >
+		
+	 update moram	
+		set 
+			moramjigi = #moramjigi#,
+			mr_info = #mr_info#,
+			mr_image = #mr_image#,
+			mr_cdate = #mr_cdate#,
+			mr_limit = #mr_limit#,
+			mr_rgn = #mr_rgn#,
+			subscribe_no = #subscribe_no#,
+			subject_no = #subject_no#,
+			mr_state = #mr_state#
+	  where mr_no = #mr_no#
+	
+	</update>
+	
+	<select id ="getMoramList" resultClass="moramVO">
+	select * from moram 
+	
+	</select>
+	
+	<select id ="getWeimMemberList" resultClass="memberVO">
+		select *
+      from member
+     where MEM_JSTATE like '%>%'
+	</select>
+	
+	<select id="getTchAplyList" resultClass="teacherVO">
+		select * from TEACHER_APPLY
+	</select>
+
+<select id ="getClassList" resultClass="classVO">
+	select * from class
+	</select>
+
+
+	<update id="classUpdate2" parameterClass="classVO" >
+		
+	 update class
+		set 
+			class_name	=#class_name#,
+			mem_id		=#mem_id#,
+			class_image =#class_image#,
+			class_info	=#class_info#,
+			class_addr	=#class_addr#,
+			class_rgn	=#class_rgn#,
+			subject_no	=#subject_no#
+	  where class_no	=#class_no#
+	
+	</update>
+
+<select id ="getfacilitiesList" resultClass="facilitiesVO">
+	select * from FACILITIES
+	</select>
+	
+	<update id="facilitiesUpdate" parameterClass="facilitiesVO" >
+		
+	 update facilities
+		set facilities_name		=#facilities_name#,
+			facilities_rgn		=#facilities_rgn#,
+			facilities_info		=#facilities_info#,
+			facilities_addr		=#facilities_addr#,
+			facilities_jdate	=#facilities_jdate#,
+			facilities_jstate	=#facilities_jstate#,
+			subject_no			=#subject_no#
+	  where facilities_no 		=#facilities_no#
+	
+	</update>	
+	
+	<insert id ="insertFacility" parameterClass="facilitiesVO">
+	insert into facilities
+	values(('FA'||FA_SEQ.nextval),#facilities_name#,#facilities_rgn#,#facilities_info#,
+			#facilities_addr#,#facilities_jdate#
+			#facilities_jstate#,#subject_no#)
+	</insert>
+	
+<select id ="getplaceList" resultClass="placeVO">
+	select 	facilities_no,
+			place_no,
+			place_name,
+			place_info,
+			place_price 
+	from 	place
+	</select>
+	
+	<update id="placeUpdate" parameterClass="placeVO" >
+		
+	 update place			
+		set facilities_no	=#facilities_no#,
+			place_name		=#place_name#,
+			place_info		=#place_info#,
+			place_price		=#place_price#
+	  where place_no        =#place_no#
+	</update>
+	
+	<select id ="getplaceTimeList" resultClass="placeTimeVO">
+	select 	*	from 	placetime
+	</select>
+
+	<select id ="getMoramjigiList" resultClass="moramMemberVO">
+	
+	select 	*	from 	moram_member
+	where MR_INFO = '모람지기'
+	
+	</select>
+	
+	<update id ="updateMoramjigi" parameterClass="moramMemberVO">
+	
+	 update moram_member			
+		set mr_no	=#mr_no#,
+			mr_info	=#mr_info#
+	  where mem_id	=#mem_id#
+	</update>
+	
+	<update id ="updateTeacher" parameterClass="MemberVO">
+	
+     update moram_member			
+		set mem_div = #mem_div#
+	  where mem_id	= #mem_id#
+     
+	
+	</update>
+	
+	
+	
+
+</sqlMap>

@@ -1,0 +1,14 @@
+@charset "UTF-8";
+
+.mrTab{
+	cursor: pointer;
+}	
+.mrTab:link{
+	text-decoration: none; 
+	text-shadow: 0 0 24px; 
+}
+.mrTab:hover{
+	text-decoration: none; 
+	text-shadow: 0 0 24px; 
+}
+

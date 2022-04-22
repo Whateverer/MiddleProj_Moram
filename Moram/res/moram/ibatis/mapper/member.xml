@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE sqlMap
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+	
+<sqlMap namespace="member">
+
+   
+	<insert id="insertMember"  parameterClass="memberVO" >
+		insert into MEMBER ( mem_id,
+ 							mem_pass,
+  							mem_image,
+ 							mem_name,
+  							mem_bir,
+ 							mem_email,
+  							mem_tel,
+  							mem_rgn,
+   							mem_jdate,
+   							mem_jstate,
+  							mem_div)
+		values ( #mem_id#,
+				 #mem_pass#,
+				 #mem_image#,
+				 #mem_name#,
+				 #mem_bir#,
+				 #mem_email#,
+				 #mem_tel#,
+				 #mem_rgn#,
+				  sysdate,
+				  '정상',
+				  '모라미')
+	
+	</insert>
+	     
+	<select id="getAllMember" resultClass="memberVO">
+		select * from MEMBER
+	</select>
+	   
+	<update id = "updateMember" parameterClass ="String" >
+		update set
+                mem_id =  #mem_id#,
+		        mem_pass = #mem_pass#,
+				mem_image = #mem_image#,
+				mem_name = #mem_name#,
+				mem_bir = #mem_bir#,
+				mem_emial = #mem_email#,
+				mem_rgn = #mem_rgn#,
+				mem_jdate = sysdate,
+				mem_jstate ="morami"
+				mem_div =  #mem_div#,
+		where MEM_ID = #mem_id#,
+	</update>
+	   
+
+	<select id="getLoginMember"  parameterClass ="memberVO" resultClass="memberVO"  >
+		select mem_id, mem_name, mem_jstate, mem_div from MEMBER 
+		where mem_id=#mem_id# 
+		and mem_pass=#mem_pass#
+	</select>
+
+	<select id="getMemberCount" parameterClass="string" resultClass="string">
+	select mem_id from MEMBER 
+		where mem_id=#mem_id# 
+	</select>
+	<select id="getMemberEmail" parameterClass="string" resultClass="string">
+	select mem_email from MEMBER 
+		where mem_email=#mem_email# 
+	</select>
+
+	<insert id="insertMemfavcat" parameterClass="memfavcatVO">
+	insert into mem_favcat (mem_id,subject_no)
+	
+		values ( #mem_id#,
+				 #subject_no#)
+	</insert>
+	
+	<update id="updateNewPwd" parameterClass="memberVO">
+	    update member
+           set mem_pass =#mem_pass#
+	     where mem_id = #mem_id#
+           and mem_name = #mem_name#
+		   and mem_email = #mem_email#
+	
+	</update>
+ 
+		<select id="getFgId" parameterClass="memberVO" resultClass="string">
+	    select mem_id from MEMBER 
+	    where mem_email=#mem_email# 
+	      and mem_name = #mem_name#
+	     
+	
+	</select>
+	
+</sqlMap> 
+	

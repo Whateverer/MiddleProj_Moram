@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+	<!DOCTYPE sqlMap
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+	
+	
+	<sqlMap namespace="myPage">
+	
+		<update id="memberDelete" parameterClass="String">
+			update member set mem_jstate = '탈퇴회원' where mem_id = #mem_id#
+		</update>
+	
+		
+		<select id="memberInfo" parameterClass="String" resultClass="memberVO">
+			select * from member where mem_id = #mem_id#
+		</select>
+	
+	
+	
+	
+		<update id="memberInfoUpdate" parameterClass="memberVO">
+			update member set 
+				   mem_pass = #mem_pass#,
+				   mem_image = #mem_image#,
+				   mem_name = #mem_name#,
+				   mem_email = #mem_email#,
+				   mem_tel = #mem_tel#,
+				   mem_rgn = #mem_rgn#
+			 where mem_id = #mem_id#
+		</update>
+		
+		
+<!-- 		결제 전 모람지기 인지 확인 결제는 모람지기만 할 수 있기 때문 -->
+		<select id="youJIgi" parameterClass="String" resultClass="int">
+			select count(moramjigi) from moram where moramjigi = #mem_id# 
+		</select>
+		
+<!-- 		결제 -->
+		<insert id="moramSubscribePay" parameterClass="subscribeVO">
+			insert into SUBSCRIBE values('SUB'||SUB_SEQ.NEXTVAL, (select SUBSCRIBE_NO from SUBSCRIBE_TYPE where SUBSCRIBE_NAME = #subscribe_name#), #mem_id#, SYSDATE, SYSDATE + 30, #subscribe_paytype#, '결제완료')			
+			
+			<selectKey keyProperty="subscribe_payno" resultClass="String">
+				select 'SUB'||SUB_SEQ.CURRVAL from dual
+			</selectKey>
+		</insert>
+		
+		
+		
+		
+		<select id="passwordChk" parameterClass="Map" resultClass="int">
+			select count(*) from member where mem_pass = #mem_pass#  and mem_id = #mem_id#
+		</select>	
+		
+		
+		
+<!-- 		장소예약 현황 -->
+		<select id="placeTimeRezList" parameterClass="String" resultClass="placeVO">
+			 select distinct *
+			  from place c, (select *
+			                   from placetime
+			                  where placetime_no in (select placetime_no
+			                                           from place_pay
+			                                          where mem_id = #mem_id#)) b, 
+			                                              (select *
+			                                               from place_pay
+			                                              where mem_id = #mem_id#) a
+			  where c.place_no in b.place_no
+			    and b.placetime_no in a.placetime_no
+			    and a.mem_id = #mem_id#
+	    </select>                                               
+                                                       
+                  
+        
+        <update id="placePayRefund" parameterClass="String">
+        	update place_pay set placepay_state = '환불완료' where placepay_no = #placepay_no# 
+        </update>
+                                                       
+		<insert id="placeTimeRezRePay" parameterClass="String">
+			insert into place_repay values('PLRP'||plrepay_seq.nextval, #placepay_no#, SYSDATE, SYSDATE, '환불완료')
+		</insert>
+		
+<!-- 		플레이스 페이의 페이 상태를 환불로 바꿔주는 쿼리 -->
+		<update id="placepayrefund" parameterClass="String">
+			update place_pay set PLACEPAY_STATE = '환불완료' where placepay_no = #placepay_no#
+		</update>
+		
+		
+		
+		
+		
+		<select id="preferClassList" parameterClass="String" resultClass="classVO">
+			select * from class A, (select class_no from class_prefer where mem_id = #mem_id#) B  where A.class_no = B.class_no
+		</select>
+		
+<!-- 		클래스 좋아요 해제 -->
+<!-- 		<delete id="noClassPrefer" parameterClass="classPreferVO 로 넣어야함"></delete> -->
+		
+		
+		
+		<select id="preferMoramList" parameterClass="String" resultClass="moramVO">
+			select * from moram where mr_no in (select mr_no from moram_prefer where mem_id = #mem_id#) 
+		</select>
+		
+<!-- 		모람 좋아요 해제 -->
+<!-- 		<delete id="noPrefer" parameterClass="moramPreferVO 로 넣어야함"></delete> -->
+		
+		
+		<update id="moramWeim" parameterClass="Map">
+			update member set mem_jstate = #moramName#||'>'||#moramiName# where mem_id = #mem_id#
+		</update>
+		
+		
+		<insert id="teacherApply" parameterClass="teacherVO">
+			insert into teacher_apply (mem_id, teacher_plan, teacher_wdate) values(#mem_id#, #teacher_plan#, SYSDATE)
+		</insert>
+		
+		
+<!-- 		결제 내역 확인하기 -->
+		<select id="payList" parameterClass="String">
+			select * from subscribe where mem_id = #mem_id#
+		</select>
+		
+<!-- 	모람권	결제 환불하기 -->
+		<update id="moramRepay" parameterClass="String">
+			update SUBSCRIBE set SUBSCRIBE_PSTATE = '환불완료' where mem_id = #mem_id#
+		</update>
+		
+		<select id="mainMoram" resultClass="moramVO" parameterClass="String">
+			SELECT distinct* FROM moram where mr_name like '%'||#search#||'%' order by DBMS_RANDOM.RANDOM
+		</select>
+		
+		<select id="mainClass" resultClass="classVO" parameterClass="String">
+			SELECT distinct* FROM class where class_name like '%'||#search#||'%' order by DBMS_RANDOM.RANDOM
+		</select>
+		
+		<update id="passUpdate" parameterClass="Map">
+			update member set mem_pass = #new_pass# where mem_pass = #old_pass# and mem_id = #mem_id#
+		</update>
+		
+		<update id="moramFive" parameterClass="String">
+			update moram set mr_limit = 50, subscribe_no = 2 where moramjigi = #moramjigi#
+		</update>
+		
+		<update id="moramHun" parameterClass="String">
+			update moram set mr_limit = 100, subscribe_no = 3 where moramjigi = #moramjigi#
+		</update>
+		
+		<select id="moramItzy" parameterClass="String" resultClass="moramVO">
+			select * from moram where moramjigi = #moramjigi#
+		</select>
+		<select id="moramiItzy" parameterClass="String" resultClass="moramMemberVO">
+			select mem_id from moram_member where mr_no = (select mr_no from moram where moramjigi = #moramjigi#)
+		</select>
+		
+		<select id="moramPayList" parameterClass="String" resultClass="subscribeVO">
+			select * from subscribe where mem_id = #mem_id# order by 5 asc
+		</select>
+		
+		<update id="moramRefund" parameterClass="String">
+			update subscribe set subscribe_pstate = '환불완료' where subscribe_payno = #subscribe_payno#
+		</update>
+		
+		<update id="moramReset" parameterClass="String">
+			update moram set mr_limit = 20, subscribe_no = 0 where moramjigi = #mem_id#
+		</update>
+		
+		<select id="moramPayChk" resultClass="int" parameterClass="Map">
+			select count(*) from subscribe where mem_id = #mem_id# and subscribe_no = (select subscribe_no from subscribe_type where subscribe_name = #subscribe_name#)
+		</select>
+		
+	</sqlMap>
+	
+	
+	

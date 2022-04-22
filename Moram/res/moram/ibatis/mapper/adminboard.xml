@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE sqlMap
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+	
+
+<sqlMap namespace="adminboard">
+		<select id="adminTotalCount" parameterClass="boardVO" resultClass="int">
+		select count(*)
+ 		from board
+ 		where boardgr_no=#boardgr_no#
+	</select>
+	
+	<select id="adminSelectByPage" resultClass="boardVO" parameterClass="boardVO">
+    	<![CDATA[
+		 select A.* 
+		   from (
+   				 select rownum as rnum, B.*  from (
+          		 								select b.mem_name, a.board_title, a.board_cont,a.board_no
+         		 								 from board a, (select mem_name, mem_id from member) b
+          		 								where a.board_writer=b.mem_id
+         										  and boardgr_no=#boardgr_no#
+          		 								order by a.board_no desc) B
+   			 	 where rownum <= #end#) A 
+			where A.rnum >= #start#
+ 		 ]]>
+	</select>
+	
+		<select id="adminBoardInfo" parameterClass="boardVO" resultClass="boardVO">
+	   select b.mem_name, a.board_no, a.board_title, a.board_cont, to_char(a.board_udate,'yyyy/mm/dd') board_udate, a.board_hit,
+  		      c.board_like, a.board_writer
+		 from board a, (select mem_name, mem_id from member) b, (select count(*) board_like from board_like where board_no = #board_no# ) c
+	    where a.board_writer = b.mem_id
+  	  	  and board_no=#board_no#
+	</select>
+	
+	<insert id="insertAdminBoard" parameterClass="boardVO">
+		insert into board(boardgr_no,board_no,board_title,board_cont,board_writer,board_wdate)
+		values(#boardgr_no#,board_num_seq.nextval,#board_title#,#board_cont#,#board_writer#,sysdate)
+		
+		<selectKey keyProperty="board_no" resultClass="int">
+		select board_num_seq.currval from dual
+		</selectKey>
+	</insert>
+
+</sqlMap>
+
+	
+

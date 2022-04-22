@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE sqlMap
+   PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+   "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+   
+<!--       // 모람가입
+   public String insertMoram();
+   
+   // 정액권가입체크
+   public int moramSubscribeChk();
+   
+   // 모람중복체크
+   public int moramNameChk();
+   
+   // 가입모람리스트
+   public List<MoramVO> ();
+   
+   // 관심모람리스트
+   public List<MoramVO> preferMoramList();
+   
+   // 카테고리로 검색한 모람
+   public List<MoramVO> selCatMoramList();
+   
+   // 가입시 선택한 카테고리, 지역에 매칭되는 모람
+   public List<MoramVO> sameCatMoramList();
+   
+   // 선택한 모람 정보
+   public MoramVO moraminfo();
+   
+   // 모람에 가입된 회원인지 체크
+   public int moramMemChk();
+   
+   // 모람에 추가
+   public String insertMoramMember();
+   
+   // 관심모람에 추가
+   public String insertMoramPrefer();
+   
+   // 모람수정
+   public int updateMoraminfo();
+   
+   // 모람초대
+   public void moramInvite(); -->
+<sqlMap namespace = "moram">
+<!--    관심모람에 추가 -->
+   <insert id="insertMoramPrefer" parameterClass="moramPreferVO">
+      insert into moram_prefer
+      values (#mr_no#, #mem_id#)
+   </insert>
+   
+<!-- 이미지 가져오기 -->
+	<select id="imagesList" parameterClass="String" resultClass="attachVO">
+		select attach_name, board_no
+		from attach
+		where board_no in (select board_no from board where mr_no=#mr_no#)
+	</select>  
+	
+<!-- 캘린더 가져오기 -->
+   <select id="getCalendar" resultClass="boardVO" parameterClass="string">
+      <!-- select writer, title,
+      to_char(startd, 'YYYY-MM-DD"T"HH24:MI:SS') startd,
+      to_char(endd, 'YYYY-MM-DD"T"HH24:MI:SS') endd
+      from CALENDAR where writer=#writer#
+       -->
+      
+      select board_writer, board_title, 
+		board_cont,
+		to_char(to_timestamp(hout_sdate||substr(hout_stime,9,9)), 'YYYY-MM-DD"T"HH24:MI:SS') as startd,
+		to_char(to_timestamp(hout_sdate||substr(hout_etime,9,9)), 'YYYY-MM-DD"T"HH24:MI:SS') as endd,
+		hout_place
+		from board
+		where boardgr_no = 7
+        and mr_no = #mr_no#
+   </select>
+   
+   <!-- 모람개설 -->
+   
+   <insert id="insertMoram" parameterClass="moramVO">
+   <!-- 아이디 session으로 바꾸기 / jsp에서 저장하기-->
+      insert into moram(
+         mr_no,
+         mr_name,
+         moramjigi,
+         mr_info,
+         mr_image,
+         mr_cdate,
+         mr_limit,
+         mr_rgn,
+         subscribe_no,
+         subject_no,
+         mr_state
+         )
+      values(
+         'MR'||MR_SEQ.nextval,
+         #mr_name#,
+         #moramjigi#,
+         #mr_info#,
+         #mr_image#,
+         sysdate,
+         20,
+         #mr_rgn#,
+         0,
+         #subject_no#,
+         '정상'
+         )
+      <selectKey resultClass="string" keyProperty="mr_no">
+         select 'MR'||MR_SEQ.currval from dual
+      </selectKey>
+   </insert>
+   
+   <!-- 모람 가입할 때 모람회원 추가(모람지기) service, dao 만들기 -->
+   <insert id="insertMoramjigi" parameterClass="moramMemberVO">
+   		insert into moram_member values(#mem_id#, #mr_no#, '모람지기')
+   </insert>
+      
+      <!-- 모람명 중복체크 -->
+   <select id="moramNameChk" resultClass="int" parameterClass="string">
+      select count(*) from moram where mr_name = #mr_name#
+   </select>   
+   
+   
+   <!-- 내 모람 리스트 가져오기 -->
+   <select id="myMoramList" parameterClass="String" resultClass="moramVO">
+      select mr_no,mr_name,mr_image
+        from moram
+       where mr_no in (select mr_no from moram_member where mem_id = #mem_id#)
+       order by DBMS_RANDOM.RANDOM
+   </select>
+   
+   <!-- 관심설정한 모람 가져오기 -->
+   
+   <!-- 마이페이지에서 가져오기  -->
+  <!--  <select id="preferMoramList" parameterClass="string" resultClass="moramVO">
+   		select * from moram 
+   		where mr_no = (select mr_no 
+   						 from moram_prefer 
+   						where memid = #mem_id#)
+   </select> -->
+   
+<!--    선택한 카테고리 모람 가져오기 -->
+   <select id="selCatMoramList" parameterClass="int" resultClass="moramVO">
+   		select distinct * from moram where subject_no = #subject_no#
+
+    </select>
+   
+<!--    회원가입시 설정한 카테고리, 지역 같은 모람 가져오기 -->
+   <select id="sameCatMoramList" parameterClass="string" resultClass="moramVO">
+    	 select distinct mr_no, mr_name, mr_image 
+    	   from moram 
+   		  where mr_rgn = (select mem_rgn 
+                 		    from member 
+                   		   where mem_id=#mem_id#) 
+                     		 and subject_no in(select b.subject_no
+                            	                 from member a, mem_favcat b
+                                  		        where a.mem_id = b.mem_id
+                                        	      and a.mem_id = #mem_id#)
+                                        	      order by DBMS_RANDOM.RANDOM
+   </select>
+   
+<!--    해당 모람에 가입된 회원인지 조회 -->
+   
+   <select id="moramMemChk" parameterClass="deleteMoramMemberVO" resultClass="int">
+   		select count(*) from moram_member where mem_id = #mem_id# and mr_no = #mr_no#
+   </select>
+
+<!--    선택한 모람 출력, 모람 정보 -->
+   <select id="moraminfo" parameterClass="string" resultClass="moramVO">
+   		select  mr_no,
+				mr_name,
+				moramjigi,
+				mr_info,
+				mr_image,
+				mr_cdate,
+				mr_limit,
+				mr_rgn,
+				subscribe_no,
+				subject_no  
+				from moram where mr_no = #mr_no#
+   </select>
+   
+<!-- 모람 회원 수 조회 -->
+	<select id="moramMemCnt" parameterClass="string" resultClass="int">
+		select count(*) from moram_member where mr_no = #mr_no#
+	</select>
+
+<!--    모람에 회원 추가(가입) -->
+   <insert id="insertMoramMember" parameterClass="moramMemberVO">
+   		insert into moram_member values(#mem_id#, #mr_no#, '모라미')
+   		
+   		<selectKey resultClass="string">
+   			select #mem_id# from dual
+   		</selectKey>
+   </insert>
+
+<!-- 모람 강퇴, 탈퇴 -->
+	<delete id="deleteMoramMember" parameterClass="deleteMoramMemberVO">
+		delete moram_member where mem_id = #mem_id# and mr_no = #mr_no#
+	</delete>
+
+<!-- 모람 회원목록 가져오기 -->
+	<select id="getAllMorami" resultClass="moramMemberVO" parameterClass="string">
+		select * from moram_member where mr_no = #mr_no# and mr_info = '모라미'
+	</select>
+	
+<!-- 모람지기일 때(강퇴버튼 보이기) -->	
+	<select id="MoramjigiChk" resultClass="int" parameterClass="moramMemberVO">
+		select count(*) from moram_member 
+		  where mr_no = #mr_no#
+		  and mem_id = #mem_id#
+		  and mr_info = '모람지기'
+	</select>
+	
+	<!-- 모람 관심설정했는지 체크 -->
+	<select id="chkMoramPrefer" resultClass="int" parameterClass="MoramMemberVO">
+		select count(*) from moram_prefer 
+		where mr_no = #mr_no#
+		and mem_id = #mem_id#
+	</select>
+	
+	<!-- 모람관심설정 -->
+	<insert id="moramPrefer" parameterClass="MoramMemberVO">
+		insert into moram_prefer
+		values(#mr_no#,#mem_id#)
+	</insert>
+	
+	<!-- 모람 관심설정해제 -->
+	<delete id="moramNotPrefer" parameterClass="MoramMemberVO">
+		delete moram_prefer 
+		where mr_no = #mr_no#
+		and mem_id = #mem_id#
+	</delete>
+	
+	<!-- 선택한 일정 출력 -->
+	<select id="scheduleDetail" parameterClass="boardVO" resultClass="boardVO">
+		select board_no, mr_no, board_title, board_cont, board_writer, 
+		to_char(board_wdate, '""YYYY"년 "MM"월 "DD"일"') board_wdate, 
+		to_char(hout_sdate,'dl') hout_sdate,
+		to_char(hout_stime,'""HH24"시 "MI"분 "SS"초"') hout_stime, 
+		to_char(hout_etime,'""HH24"시 "MI"분 "SS"초"') hout_etime, hout_place
+		from board
+		where boardgr_no = 7
+		and hout_sdate = #hout_sdate#
+		and mr_no = #mr_no#
+		
+	</select>
+	
+	<!-- 모람 이미지 수정 -->
+	<!-- <update id="moramImgUpdate">
+		update moram
+		   set mr_image = #mr_image#
+		 where mr_no = #mr_no#
+	</update> -->
+	
+	<!-- 모람 정보 수정 -->
+	<update id="updateMoraminfo" parameterClass="moramVO">
+		update moram set mr_info = #mr_info# where mr_no = #mr_no#
+	</update>
+	
+</sqlMap>   

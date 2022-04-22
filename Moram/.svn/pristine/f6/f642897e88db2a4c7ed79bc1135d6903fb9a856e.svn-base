@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+	<!DOCTYPE sqlMap
+	PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"
+	"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="class">
+
+	<!-- 우편번호검색 -->
+<!-- 	<select id="selectByDong" resultClass="zipVo"> -->
+<!-- 		parameterClass="String"> -->
+<!-- 		select * from ziptb where dong like #date#||'%' -->
+<!-- 	</select> -->
+	
+	<!-- 댓글수정삭제 권한 -->
+<!-- 	<select id="replyAcsCheck" parameterClass="classVo" resultClass="int"> -->
+<!-- 		select count(*) -->
+<!--   		from MEMBER -->
+<!-- 		 where (select MEM_id from MEMBER where mem_div='관리자') = #mem_div# -->
+<!--   		 or (select MEM_id from MORAM_MEMBER where mr_info='모람지기' and mr_no=#class_no#)= #mem_id# -->
+<!--   		 or (select classcmt_writer from board where classcmt_no=#classcmt_no#) = #mem_id# -->
+<!-- 	</select> -->
+	
+	<!-- 너 모람쌤이냐? -->
+	<select id="youMoramSem" parameterClass="String" resultClass="int">
+		select count(*) from class where mem_id = #mem_id#
+	</select>
+	
+	<!-- 클래스 권한 -->
+	<select id="classAcs" parameterClass="classVO" resultClass="int">
+		select count(*) from class where mem_id = #mem_id# and class_no = #class_no# 
+	</select>
+
+	<!-- 클래스 등록 -->
+	<insert id="classRegist" parameterClass="classVO">
+		insert into class (class_no, class_name, mem_id, class_info, class_addr, class_rgn, subject_no, class_state)
+		values ('CL'||cl_seq.nextval, #class_name#,
+		#mem_id#, #class_info#, #class_rgn#, #class_addr#, #subject_no#,'정상')
+
+		<selectKey resultClass="String">
+			select 'CL'||cl_seq.currval from dual
+		</selectKey>
+	</insert>
+
+	<!-- 클래스 업데이트 -->
+	<update id="classInfoUpdate" parameterClass="classVO">
+		update class set class_info = #class_info# where class_no = #class_no#
+	</update>
+
+	<!-- 클래스 삭제 -->
+	<update id="classDelete" parameterClass="classVO">
+		update class set class_state = '삭제' where mem_id = #mem_id# and class_no = #class_no#
+	</update>
+	
+	<!-- 클래스 관심설정을 한 상태인지 체크 -->
+	<select id="chkClassPrefer" parameterClass="classVO" resultClass="int">
+		select count(*)
+		  from class_prefer
+		 where class_no=#class_no#
+		   and mem_id = #mem_id#
+	</select>
+	
+	<!-- 클래스 관심설정 -->
+	<insert id="classPrefer" parameterClass="classVO">
+		insert into class_prefer values(#mem_id#, #class_no#)
+	</insert>
+
+	<!-- 클래스 관심설정 취소 -->
+	<delete id="classNotPrefer" parameterClass="classVO">
+		delete from class_prefer where mem_id = #mem_id# and class_no = #class_no#
+	</delete>
+
+	<!-- 모든 클래스 출력 -->
+	<select id="allClassList" resultClass="classVO" parameterClass="classVO">
+		 select * from class 
+		  where class_state='정상'
+	</select>
+	
+	<!-- 추천 클래스 출력 -->
+	<select id="recClassList" resultClass="classVO" parameterClass="String">
+		 select * from class 
+ 		  where class_rgn = (select mem_rgn
+                     		   from member
+                              where mem_id = #mem_id#)
+ 		    and subject_no in (select SUBJECT_NO
+                     	      from MEM_FAVCAT
+                             where mem_id = #mem_id#)
+            and class_state='정상'                 
+	</select>
+
+	<!-- 모람쌤 일때만 - 내가 운영중인 클래스 출력 -->
+	<select id="semClassList" parameterClass="String" resultClass="classVO">
+		select * from class where mem_id = #mem_id# and class_state='정상' 
+	</select>
+	
+	<!-- 모라미가 예약한 강의에 클래스들 출력 (내 클래스 출력임) -->
+	<select id="myClassList" resultClass="classVO" parameterClass="String">
+		select * from class 
+        where class_no in (
+                             select class_no 
+                             from lecture 
+                             where lecture_no in (select lecture_no 
+                             					  from lecture_rez 
+                             					  where mem_id =#mem_id# 
+                             					  and lecturerez_state = '정상')
+         					and class_state='정상'
+        )
+	</select>
+	
+	<!-- 카테고리별 클래스 출력 -->
+	<select id="categoryClassList" parameterClass="String" resultClass="classVO">
+		select * from class 
+		where subject_no = (select subject_no 
+							from subject_cat
+							where subject_name = #subject_name#) 
+		and class_state='정상' 
+	</select>
+	
+	<!-- 클래스를 눌렀을 때 그 클래스에 대한 정보만 조회하기 -->
+	<select id="classRead" parameterClass="String"
+		resultClass="classVO">
+		select * from class where class_no = #class_no#
+	</select>
+
+	
+	<!-- 강의 등록 -->
+	<insert id="lectureRegist" parameterClass="lectureVO">
+		insert into lecture 
+		values ( 'LT'||lt_seq.nextval, 
+				  #class_no#,
+			  	  #lecture_name#, 
+				  #lecture_info#, 
+				  to_date(#lecture_sdate#,'YYYY-MM-DD'),
+				  to_date(#lecture_stime#,'HH24:MI:SS'),
+				  to_date(#lecture_etime#,'HH24:MI:SS'),
+				  #lecture_price#, 
+				  #lecture_limit#,
+				  '정상')
+
+		<selectKey resultClass="String" keyProperty="lecture_no">
+			select 'LT'||lt_seq.currval from dual
+		</selectKey>
+	</insert>
+
+	<!-- 강의 수정 - 모람 쌤이 내 클래스를 조회했을 때만 수정 버튼과 삭제 버튼이 떠야함 -->
+	<update id="lectureUpdate" parameterClass="lectureVO">
+		update lecture 
+		set lecture_name = #lecture_name#, 
+			lecture_info = #lecture_info#, 
+			lecture_sdate = #lecture_sdate#, 
+			lecture_stime = to_date(#lecture_stime#,'HH24:MI:SS'), 
+			lecture_etime = to_date(#lecture_etime#,'HH24:MI:SS'), 
+			lecture_price = #lecture_price#, 
+			lecture_limit = #lecture_limit#
+		where lecture_no=#lecture_no#
+	</update>
+
+	<!-- 강의 삭제 내가 삭제버튼을 클릭한 강의에 번호를 가져와 파라미터로 -->
+	<delete id="lectureDelete" parameterClass="String">
+		delete from lecture where lecture_no = #lecture_no#
+	</delete>
+		
+	<!-- 강의 예약 현황-->
+	<select id="lectureRezList" parameterClass="String" resultClass="memberVO">
+		select a.mem_name, a.mem_tel
+             from member a, (select mem_id from lecture_rez where lecture_no = #lecture_no#) b
+            where a.mem_id = b.mem_id
+	</select>
+
+	<!-- 강의 예약 -->
+	<insert id="lectureRez" parameterClass="lectureVO">
+		insert into lecture_rez 
+		values('LTRZ'||LT_REZ_SEQ.nextval,
+			   #lecture_no#, 
+			   #mem_id#, 
+			   sysdate)
+
+		<selectKey resultClass="String">
+			select 'LTRZ'||LT_REZ_SEQ.currval from dual
+		</selectKey>
+	</insert>
+	
+	<!-- 강의 재예약 -->
+	<update id="updateLectureRez" parameterClass="lectureVO"> 
+		update lecture_rez
+		   set lecturerez_state = '정상'
+		 where lecture_no = #lecture_no# 
+		   and mem_id = #mem_id#   
+	</update>
+	
+	<!--이 강의에 예약한건지 확인 -->
+	<select id="lectureRezChk" parameterClass="lectureVO" resultClass="int">
+		select count(*)
+		  from lecture_rez
+		 where lecture_no = #lecture_no# 
+		   and mem_id = #mem_id#  
+		   and lecturerez_state = '정상'
+	</select> 
+	
+	<!--이 강의에 재예약한건지 확인 -->
+	<select id="lectureAgainRezChk" parameterClass="lectureVO" resultClass="int">
+		select count(*)
+		  from lecture_rez
+		 where lecture_no = #lecture_no# 
+		   and mem_id = #mem_id#  
+		   and lecturerez_state = '취소'
+	</select> 
+	
+	<!-- 강의 취소 모라미가 선택한 강의에 대한 lecturerez_no 를 가져와 파라미터로 -->
+	<update id="lectureNotRez" parameterClass="lectureVO">
+		update lecture_rez
+		   set lecturerez_state = '취소'
+		 where lecture_no = #lecture_no# 
+		   and mem_id = #mem_id# 
+	</update> 
+
+	<!-- 클래스 들어가면 강의 목록이 표시 내가 누른 클래스의 번호 -->
+	<select id="lectureOfClass" parameterClass="String"
+		resultClass="lectureVO">
+		select lecture_no, class_no, lecture_name, lecture_info, to_char(lecture_sdate,'yyyy/mm/dd') as lecture_sdate, 
+				to_char(lecture_stime,'hh24:mi') as lecture_stime, 
+				to_char(lecture_etime,'hh24:mi') as lecture_etime, lecture_price, lecture_limit, lecture_state
+		from lecture 
+		where class_no = #class_no#
+	</select>
+	
+	<update id="classImgUpdate" parameterClass="classVO">
+		update class
+		   set class_image = #class_image#
+		 where class_no = #class_no#
+	</update>
+
+	<!-- 수강이 완료된 강의 목록 -->
+	<select id="completeLecture" resultClass="lectureVO">
+		select * from lecture where SYSDATE > lecture_sdate
+	</select>
+
+	
+
+	<!-- 댓글 리스트 -->
+	<select id="classReplyList" parameterClass="classReplyVO" resultClass="classReplyVO">
+		select a.class_no, a.classcmt_no, a.classcmt_cont, 
+			   a.classcmt_writer, to_char(a.classcmt_wdate,'yyyy/mm/dd') as classcmt_wdate,
+			   b.mem_name
+		  from class_reply a, (select mem_name, mem_id from member) b
+		 where class_no = #class_no#
+		   and a.classcmt_writer = b.mem_id
+	</select>
+	
+	<!-- 댓글 등록 -->
+	<insert id="classReplyRegist" parameterClass="classReplyVO">
+		insert into class_reply 
+		values( #class_no#, 
+				CL_RPL_SEQ.nextval,
+				#classcmt_cont#, 
+				#mem_id#, 
+				sysdate)
+
+		<selectKey resultClass="int">
+			select CL_RPL_SEQ.currval from dual
+		</selectKey>
+	</insert>
+
+	<!-- 댓글 수정 -->
+	<update id="classReplyUpdate" parameterClass="classReplyVO">
+		update class_reply 
+		   set classcmt_cont = #classcmt_cont# 
+		 where classcmt_no = #classcmt_no#
+	</update>
+
+	<!-- 댓글 삭제 -->
+	<delete id="classReplyDelete" parameterClass="String">
+		delete from class_reply 
+		where classcmt_no = #classcmt_no#
+	</delete>
+
+	<!-- 캘린더 가져오기 -->
+   <select id="getClCalendar" resultClass="lectureVO" parameterClass="string">
+      select LECTURE_NAME,
+		to_char(to_timestamp(LECTURE_SDATE||substr(LECTURE_STIME,9,9)), 'YYYY-MM-DD"T"HH24:MI:SS') as startd,
+		to_char(to_timestamp(LECTURE_SDATE||substr(LECTURE_ETIME,9,9)), 'YYYY-MM-DD"T"HH24:MI:SS') as endd
+	from LECTURE	
+	where CLASS_NO=#CLASS_NO#
+   </select>
+
+</sqlMap>
+
+
